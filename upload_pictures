@@ -1,0 +1,64 @@
+#!/usr/bin/python3
+import cgi
+import cgitb
+import time
+import smtplib
+import ssl
+import email
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+cgitb.enable()
+
+subject = "An email with attachment from Python"
+body = ""
+sender_email = "****@gmail.com"
+receiver_email = "****@gmail.com"
+password = "*****"
+
+# Create a multipart message and set headers
+message = MIMEMultipart()
+message["From"] = sender_email
+message["To"] = receiver_email
+message["Subject"] = subject
+print(message)
+# Create a multipart message and set headers
+#message.attach(MIMEText(body, "plain"))
+
+post_result = cgi.FieldStorage()
+print("content-type: text/html\r\n\r\n")
+print("Hello World")
+print("<br><br>")
+print()
+print(len(post_result))
+print("End")
+f = open("/home/sumo/Documents/random.jpg", "wb")
+print(f.seek(10))
+with open("random.jpg", "rb") as attachment:
+    print("Reading the attachment!")
+    # Add file as application/octet-stream
+    # Email client can usually download this automatically as attachment
+    part = MIMEBase("application", "octet-stream")
+    part.set_payload(attachment.read())
+encoders.encode_base64(part)
+# Add header as key/value pair to attachment part
+part.add_header(
+    "Content-Disposition",
+    f"attachment; filename= random.jpg",
+)
+
+# Add attachment to message and convert message to string
+message.attach(part)
+text = message.as_string()
+
+print("Arrived here!")
+f.write(post_result.getvalue("data"))
+context = ssl.create_default_context()
+
+with smtplib.SMTP_SSL("smtp.gmail.com", 456, context=context) as server:  # 456 is the smtp port
+    server.login("****", password)
+    server.sendmail("***@gmail.com",
+                    "***@gmail.com", "***@gmail.com", message)
+print("Email sent")
