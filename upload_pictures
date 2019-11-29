@@ -21,8 +21,8 @@ print(filename_from_post)
 path="/var/www/files"
 msg = EmailMessage()
 msg["Subject"] = "Photo from the raspberry pi"
-msg["From"] = "mousumi.win"
-msg["To"] =email_address if email_address else "cpucsr@gmail.com"
+msg["From"] = "example.com"
+msg["To"] =email_address if email_address else "example@gmail.com"
 
 print(os.path.join(path, filename_from_post))
 print(post_result.keys())
