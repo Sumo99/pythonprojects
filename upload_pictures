@@ -1,64 +1,43 @@
 #!/usr/bin/python3
+import os
+import smtplib
 import cgi
 import cgitb
-import time
-import smtplib
-import ssl
-import email
-from email import encoders
-from email.mime.base import MIMEBase
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-
+from email.message import EmailMessage
 cgitb.enable()
-
-subject = "An email with attachment from Python"
-body = ""
-sender_email = "****@gmail.com"
-receiver_email = "****@gmail.com"
-password = "*****"
-
-# Create a multipart message and set headers
-message = MIMEMultipart()
-message["From"] = sender_email
-message["To"] = receiver_email
-message["Subject"] = subject
-print(message)
-# Create a multipart message and set headers
-#message.attach(MIMEText(body, "plain"))
-
-post_result = cgi.FieldStorage()
 print("content-type: text/html\r\n\r\n")
-print("Hello World")
-print("<br><br>")
-print()
-print(len(post_result))
-print("End")
-f = open("/home/sumo/Documents/random.jpg", "wb")
-print(f.seek(10))
-with open("random.jpg", "rb") as attachment:
-    print("Reading the attachment!")
-    # Add file as application/octet-stream
-    # Email client can usually download this automatically as attachment
-    part = MIMEBase("application", "octet-stream")
-    part.set_payload(attachment.read())
-encoders.encode_base64(part)
-# Add header as key/value pair to attachment part
-part.add_header(
-    "Content-Disposition",
-    f"attachment; filename= random.jpg",
-)
 
-# Add attachment to message and convert message to string
-message.attach(part)
-text = message.as_string()
+post_result = cgi.FieldStorage(keep_blank_values=True)
+print("File received")
+print("""
+HTTP/1.1 200 OK
+Content-Length: 0
+""")
 
-print("Arrived here!")
-f.write(post_result.getvalue("data"))
-context = ssl.create_default_context()
+#print(post_result.getlist("data"))
+email_address=post_result.getvalue("email_address")
+filename_from_post=post_result.getvalue("filename")
+print(filename_from_post)
+path="/var/www/files"
+msg = EmailMessage()
+msg["Subject"] = "Photo from the raspberry pi"
+msg["From"] = "mousumi.win"
+msg["To"] =email_address if email_address else "cpucsr@gmail.com"
 
-with smtplib.SMTP_SSL("smtp.gmail.com", 456, context=context) as server:  # 456 is the smtp port
-    server.login("****", password)
-    server.sendmail("***@gmail.com",
-                    "***@gmail.com", "***@gmail.com", message)
-print("Email sent")
+print(os.path.join(path, filename_from_post))
+print(post_result.keys())
+print(post_result.getvalue("data"))
+with open(os.path.join(path, filename_from_post) , "wb") as filehandle:
+    print("about to write to file")
+    filehandle.write(post_result.getvalue("data"))
+with open(os.path.join(path, filename_from_post) , "rb") as filehandle:
+	img_data = filehandle.read()
+
+msg.add_attachment(img_data, maintype='image', subtype="png")
+print("arrived")
+# Send the email via our own SMTP server.
+with smtplib.SMTP('localhost') as s:
+    print("Beggining to send the email")
+    s.set_debuglevel(1)
+    s.send_message(msg)
+
