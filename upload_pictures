@@ -1,23 +1,25 @@
 #!/usr/bin/python3
-from email.message import EmailMessage
 import os
 import smtplib
 import cgi
 import cgitb
-import logging
+from email.message import EmailMessage
 import boto3
 
-LOG_FILENAME = '/var/log/pypost.log'
-logging.basicConfig(filename=LOG_FILENAME, level=logging.DEBUG)
+#import logging
+#logging.basicConfig(filename='/var/log/motion.log',level=logging.DEBUG)
+#logging.debug('Request received')
 
 cgitb.enable()
+
 print("content-type: text/html\r\n\r\n")
 
 post_result = cgi.FieldStorage(keep_blank_values=True)
+
 bucket_name = "driving-test-bucket"
 s3_resource = boto3.resource('s3',
-                             aws_access_key_id="AKIA5WZN7JK6THEKPDVB",
-                             aws_secret_access_key="EZxy8FECHHBmYsm+P3+HtHKoHbv2sqmefv+da2ZW",
+                             aws_access_key_id="REDACTED",
+                             aws_secret_access_key="REDACTED",
                              region_name="us-east-2"
                              )
 
@@ -33,27 +35,25 @@ Content-Length: 0
 email_address = post_result.getvalue("email_address")
 filename_from_post = post_result.getvalue("filename")
 filename_from_post = os.path.basename(filename_from_post)
-print(filename_from_post)
 
-logging.debug('Email Address: '+email_address)
-logging.debug('Filename: '+filename_from_post)
+#logging.debug('filename: {}'.format(filename_from_post))
 
 path = "/var/www/files"
 msg = EmailMessage()
-msg["Subject"] = "Motion"
-msg["From"] = "mousumi.win"
-msg["To"] = email_address if email_address else "cpucsr@gmail.com"
+msg["Subject"] = "Photo from the raspberry pi"
+msg["From"] = "example.com"
+msg["To"] = email_address if email_address else "example@gmail.com"
 
 print(os.path.join(path, filename_from_post))
 print(post_result.keys())
 print(post_result.getvalue("data"))
 with open(os.path.join(path, filename_from_post), "wb") as filehandle:
-    fqn = os.path.join(path, filename_from_post)
-    first_bucket.upload_file(Filename=filename_from_post, Key=filename_from_post)
     print("about to write to file")
     filehandle.write(post_result.getvalue("data"))
 with open(os.path.join(path, filename_from_post), "rb") as filehandle:
     img_data = filehandle.read()
+    fqn = os.path.join(path, filename_from_post)
+    first_bucket.upload_file(Filename=fqn, Key=filename_from_post)
 
 msg.add_attachment(img_data, maintype='image', subtype="png")
 print("arrived")
@@ -62,4 +62,3 @@ with smtplib.SMTP('localhost') as s:
     print("Beggining to send the email")
     s.set_debuglevel(1)
     s.send_message(msg)
-
